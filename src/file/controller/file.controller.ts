@@ -2,8 +2,6 @@ import {
   Controller,
   Get,
   Header,
-  NotFoundException,
-  Param,
   Post,
   StreamableFile,
   UploadedFile,
@@ -11,30 +9,27 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { editFileName } from '../utility/file.utility';
-import { createReadStream } from 'fs';
-import { join } from 'path';
-import { FileRequestDto } from '../dto/file.request.dto';
 import { AuthGuard } from '../../auth/guard/auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { UserId } from '../../user/decorator/user.decorator';
 import { UserService } from '../../user/service/user.service';
 import { Types } from 'mongoose';
+import { InjectMinio } from 'nestjs-minio';
+import { Client } from 'minio';
 
 @Controller('file')
 export class FileController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    @InjectMinio() private readonly minioClient: Client,
+  ) {}
 
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @Get('avatar')
   @Header('Content-Type', 'image/jpeg')
-  async getFile(@UserId() userId: Types.ObjectId): Promise<StreamableFile> {
-    const user = await this.userService.findOneById(userId);
-    if (!user.avatarPath) throw new NotFoundException();
-    const path = join(process.cwd(), user.avatarPath);
-    const file = createReadStream(path);
+  async getFile(@UserId() _id: Types.ObjectId): Promise<StreamableFile> {
+    const file = await this.userService.getUserAvatar(_id);
 
     return new StreamableFile(file);
   }
@@ -55,19 +50,16 @@ export class FileController {
       required: ['file'],
     },
   })
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './upload',
-        filename: editFileName,
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', {}))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
     @UserId() userId: Types.ObjectId,
   ) {
     const user = await this.userService.findOneById(userId);
-    await this.userService.addAvatar({ user: user, avatarPath: file.path });
+
+    await this.userService.addAvatar({
+      user: user,
+      file: file,
+    });
   }
 }

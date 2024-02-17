@@ -1,25 +1,28 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUserInterface } from '../interface/create-user.interface';
 import { ConfigService } from '../../core/service/config.service';
 import { IAddShortlink } from '../interface/add-shortlink.interface';
-import * as fs from 'fs/promises';
 import { IChangeUser } from '../interface/change-user.interface';
 import { User } from '../schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { IAddAvatar } from '../interface/add-avatar.interface';
+import { v4 as uuidv4 } from 'uuid';
+import { InjectMinio } from 'nestjs-minio';
+import { Client } from 'minio';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly configService: ConfigService,
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectMinio() private readonly minioClient: Client,
   ) {}
 
   async findAll() {
@@ -69,19 +72,26 @@ export class UserService {
   }
 
   async addAvatar(dto: IAddAvatar) {
-    const user = await this.findOneById(dto.user._id);
+    const fileName = `${uuidv4()}-${dto.file.originalname}`;
 
-    if (user.avatarPath) {
-      try {
-        await fs.unlink(user.avatarPath);
-      } catch (err) {
-        console.log(err);
-      }
+    await this.minioClient.putObject(
+      'short-links',
+      fileName,
+      dto.file.buffer,
+      // (err, etag) => {
+      //   console.log(etag);
+      // },
+    );
+
+    if (dto.user.avatarPath) {
+      await this.minioClient.removeObjects('short-links', [
+        dto.user.avatarPath,
+      ]);
     }
 
     await this.userModel
       .findOneAndUpdate(dto.user._id, {
-        avatarPath: dto.avatarPath,
+        avatarPath: fileName,
       })
       .exec();
   }
@@ -105,5 +115,18 @@ export class UserService {
       }
       throw new InternalServerErrorException();
     }
+  }
+
+  async getUserAvatar(_id: Types.ObjectId) {
+    const user = await this.findOneById(_id);
+    if (!user.avatarPath) throw new NotFoundException();
+
+    return await this.minioClient.getObject(
+      'short-links',
+      user.avatarPath,
+      // (err, etag) => {
+      //   console.log(etag);
+      // },
+    );
   }
 }

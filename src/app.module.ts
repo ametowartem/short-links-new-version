@@ -10,7 +10,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-import { UserModule } from './user/user.module';
 import { NestMinioModule } from 'nestjs-minio';
 @Module({
   imports: [
@@ -35,17 +34,17 @@ import { NestMinioModule } from 'nestjs-minio';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
     }),
-    // NestMinioModule.register(
-    //   // isGlobal: true,
-    //   {
-    //     endPoint: 'localhost',
-    //     port: 9000,
-    //     useSSL: true,
-    //     accessKey: 'minioadmin',
-    //     secretKey: 'minioadmin',
-    //     //   добавить в .env
-    //   },
-    // ),
+    NestMinioModule.register(
+      // isGlobal: true,
+      {
+        endPoint: 'localhost',
+        port: 9000,
+        useSSL: false,
+        accessKey: 'minioadmin',
+        secretKey: 'minioadmin',
+        //   добавить в .env
+      },
+    ),
   ],
 })
 export class AppModule {}
