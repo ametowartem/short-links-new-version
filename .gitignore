@@ -1,0 +1,6 @@
+/.env
+/upload/
+/dist/
+/docker-volumes/
+/node_modules/
+/.idea
