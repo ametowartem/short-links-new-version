@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthService } from '../service/auth.service';
 import { UserService } from '../../user/service/user.service';
 import { SingInResponseDto } from '../dto/sing-in.response.dto';
@@ -9,7 +9,7 @@ import { GqlAuthGuard } from '../guard/gql-auth.guard';
 import { GqlUserId } from '../../user/decorator/gql-user-id.decorator';
 import { Types } from 'mongoose';
 
-@Resolver('Auth')
+@Resolver()
 export class AuthResolver {
   constructor(
     private readonly authService: AuthService,

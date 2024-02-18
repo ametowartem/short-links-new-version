@@ -26,10 +26,10 @@ export class UserService {
   ) {}
 
   async findAll() {
-    return this.userModel.find().exec();
+    return await this.userModel.find().exec();
   }
   async findOneById(_id: Types.ObjectId) {
-    return this.userModel.findById(_id).exec();
+    return await this.userModel.findById(_id).exec();
   }
   async findOneByUsername(username: string) {
     return this.userModel.findOne({ username: username }).exec();

@@ -10,7 +10,7 @@ import { GqlUserId } from '../decorator/gql-user-id.decorator';
 import { GqlAuthGuard } from '../../auth/guard/gql-auth.guard';
 import { FindUserByIdRequestDto } from '../dto/find-user-by-id.request.dto';
 
-@Resolver(() => User)
+@Resolver()
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 

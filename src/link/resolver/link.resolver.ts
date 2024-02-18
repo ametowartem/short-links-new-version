@@ -8,7 +8,7 @@ import { UserLinksResponseDto } from '../dto/user-links.response.dto';
 import { GetShortLinkRequestDto } from '../dto/get-short-link.request.dto';
 import { GetShortLinkResponseDto } from '../dto/get-short-link.response.dto';
 
-@Resolver('Link')
+@Resolver()
 export class LinkResolver {
   constructor(private readonly linkService: LinkService) {}
 
