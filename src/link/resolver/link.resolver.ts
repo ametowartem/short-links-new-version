@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Types } from 'mongoose';
 import { GqlUserId } from '../../user/decorator/gql-user-id.decorator';
 import { Body, Req, UseGuards } from '@nestjs/common';
@@ -25,12 +25,14 @@ export class LinkResolver {
   @Mutation(() => GetShortLinkResponseDto)
   async getShortLink(
     @Args('body') dto: GetShortLinkRequestDto,
-    @Req() request,
+    @Context() context,
     @GqlUserId() _id: Types.ObjectId,
   ) {
+    const { req } = context;
+
     return new GetShortLinkResponseDto({
       shortLink: `http://${
-        request.headers.host
+        req.headers.host
       }/${await this.linkService.linkToShort(
         dto.link,
         _id,

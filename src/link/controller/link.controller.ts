@@ -26,7 +26,7 @@ export class LinkController {
   @ApiBearerAuth()
   @Get('/userLinks')
   async getUserLinks(@UserId() _id: Types.ObjectId) {
-    await this.linkService.getUserLinks(_id);
+    return await this.linkService.getUserLinks(_id);
   }
 
   @UseGuards(AuthGuard)
