@@ -1,0 +1,71 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  _id: String
+  username: String!
+  password: String!
+  mail: String
+  avatarPath: String
+  shortLinks: String
+}
+
+type SingInResponseDto {
+  accessToken: String!
+}
+
+type UserPayloadResponseDto {
+  username: String!
+  mail: String
+}
+
+type GetShortLinkResponseDto {
+  shortLink: String!
+}
+
+type UserLinksResponseDto {
+  shortLink: String!
+  link: String!
+  redirectCount: String!
+}
+
+type Query {
+  getProfile: UserPayloadResponseDto!
+  users: [User!]!
+  getUserLinks: [UserLinksResponseDto!]!
+}
+
+type Mutation {
+  signIn(body: SingInRequestDto!): SingInResponseDto!
+  registry(body: CreateUserRequestDto!): User!
+  changeUser(body: ChangeUserRequestDto!): User!
+  findOne(body: FindUserByIdRequestDto!): User!
+  getShortLink(body: GetShortLinkRequestDto!): GetShortLinkResponseDto!
+}
+
+input SingInRequestDto {
+  username: String!
+  password: String!
+}
+
+input CreateUserRequestDto {
+  username: String!
+  password: String!
+  mail: String
+}
+
+input ChangeUserRequestDto {
+  username: String
+  password: String
+  mail: String
+}
+
+input FindUserByIdRequestDto {
+  _id: String!
+}
+
+input GetShortLinkRequestDto {
+  link: String!
+  userLink: String
+}
