@@ -25,4 +25,4 @@ jobs:
       -  name: lint project
          run: npm run lint
       -  name: test project
-         run: npm test
+         run: npm run jest
