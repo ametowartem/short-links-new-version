@@ -1,9 +1,5 @@
 import { Module } from '@nestjs/common';
-// import { MailService } from './service/mail.service';
-// import { MailControllerV1 } from './controller/mail.controller.v1';
 import { ScheduleModule } from '@nestjs/schedule';
-// import { MailCronJob } from './job/mail.cron-job';
-// import { MessageRepository } from './repository/message.repository';
 import { RmqModule } from '@app/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
@@ -12,7 +8,6 @@ import { Message, MessageSchema } from './schema/message.schema';
 import { MailService } from './service/mail.service';
 import { appProviders } from './mail.provider';
 import { MailControllerV1 } from './controller/mail.controller.v1';
-import { MailCronJob } from './job/mail.cron-job';
 
 @Module({
   imports: [
@@ -36,7 +31,7 @@ import { MailCronJob } from './job/mail.cron-job';
     }),
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
   ],
-  providers: [MailService, ...appProviders, MailCronJob],
+  providers: [MailService, ...appProviders],
   controllers: [MailControllerV1],
   // controllers: [MailControllerV1],
   // providers: [, ...appProviders, MailCronJob, ],
