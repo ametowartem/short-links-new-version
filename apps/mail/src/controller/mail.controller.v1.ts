@@ -10,14 +10,6 @@ export class MailControllerV1 {
     private readonly rmqService: RmqService,
   ) {}
 
-  // @Post()
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  // })
-  // async sendMail(@Body() body: GetMailParamsDto) {
-  //   await this.mailService.sendMessage(body);
-  // }
-
   @EventPattern('mail')
   async verifyMail(@Payload() dto, @Ctx() ctx: RmqContext) {
     const body: IAddMail = dto.dto;
