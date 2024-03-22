@@ -2,33 +2,32 @@ import {
   Controller,
   Get,
   Header,
+  Param,
   Post,
+  Req,
   StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../../auth/guard/auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { UserId } from '../../user/decorator/user.decorator';
-import { UserService } from '../../user/service/user.service';
-import { InjectMinio } from 'nestjs-minio';
-import { Client } from 'minio';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AwsService } from '../service/aws.service';
+import { IUploadFile } from '../../user/interface/add-avatar.interface';
+import { GetFileRequestDto } from '../dto/get-file.request.dto';
 
 @Controller('file')
-export class FileController {
-  constructor(
-    private readonly userService: UserService,
-    @InjectMinio() private readonly minioClient: Client,
-  ) {}
+export class AwsController {
+  constructor(private readonly awsService: AwsService) {}
 
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @Get('avatar')
+  @Get('get/:filename')
   @Header('Content-Type', 'image/jpeg')
-  async getFile(@UserId() _id: string): Promise<StreamableFile> {
-    const file = await this.userService.getUserAvatar(_id);
+  async getFile(@Param() dto: GetFileRequestDto): Promise<StreamableFile> {
+    const file = await this.awsService.getFile(dto.filename);
 
     return new StreamableFile(file);
   }
@@ -54,9 +53,9 @@ export class FileController {
     @UploadedFile() file: Express.Multer.File,
     @UserId() _id: string,
   ) {
-    await this.userService.addAvatar({
+    await this.awsService.uploadFile({
       _id: _id,
       file: file,
-    });
+    } as IUploadFile);
   }
 }
