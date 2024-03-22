@@ -44,10 +44,10 @@ export class AuthController {
   })
   async getProfile(@Request() req): Promise<UserPayloadResponseDto> {
     const user = await this.userService.findOneById(req.user.id);
-    return new UserPayloadResponseDto({
+    return {
       username: user.username,
       mail: user.mail,
-    });
+    } as UserPayloadResponseDto;
   }
 
   @UseGuards(AuthGuard)

@@ -37,10 +37,12 @@ export class LinkService {
 
     const existOnRedis = await this.redis.get(shortLink);
 
-    if (!existOnRedis) {
-      this.redis.set(shortLink, dto.longLink);
-      this.redis.set(`${shortLink}:redirect`, 0);
-    } else throw new BadRequestException('Данная ссылка уже существует!');
+    if (existOnRedis) {
+      throw new BadRequestException('Данная ссылка уже существует!');
+    }
+
+    this.redis.set(shortLink, dto.longLink);
+    this.redis.set(`${shortLink}:redirect`, 0);
 
     await this.userService.addShortLink({
       _id: dto._id,

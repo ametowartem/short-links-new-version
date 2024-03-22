@@ -1,7 +1,6 @@
-import { User } from '../schema/user.schema';
 import * as Buffer from 'buffer';
 
-export interface IAddAvatar {
+export interface IUploadFile {
   _id: string;
   file: IFileBuffer;
 }

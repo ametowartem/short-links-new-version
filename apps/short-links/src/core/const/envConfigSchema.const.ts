@@ -17,4 +17,10 @@ export const JoiSchema: Joi.ObjectSchema = Joi.object({
   EXT: Joi.number().default(604800),
   SALT_ROUNDS: Joi.number().default(10),
   MONGODB_URI: Joi.string().default('mongodb://localhost/short_links'),
+  MAIL_MICROSERVICE: Joi.string().required(),
+  MINIO_ACCESS_KEY: Joi.string().required(),
+  MINIO_SECRET_KEY: Joi.string().required(),
+  MINIO_HOST: Joi.string().required(),
+  MINIO_PORT: Joi.number().required(),
+  MINIO_BUCKET_NAME: Joi.string().required(),
 });

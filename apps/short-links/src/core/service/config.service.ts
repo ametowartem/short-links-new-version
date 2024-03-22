@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EnvConfigConst } from '../const/envConfig.const';
 import { JoiSchema } from '../const/envConfigSchema.const';
 import * as dotenv from 'dotenv';
+import * as Joi from 'joi';
 
 @Injectable()
 export class ConfigService {
@@ -65,5 +66,23 @@ export class ConfigService {
   }
   get mongodbUri(): string {
     return String(this.envConfig.MONGODB_URI);
+  }
+  get mailMicroservice(): string {
+    return String(this.envConfig.MAIL_MICROSERVICE);
+  }
+  get minioAccessKey(): string {
+    return String(this.envConfig.MINIO_ACCESS_KEY);
+  }
+  get minioSecretKey(): string {
+    return String(this.envConfig.MINIO_SECRET_KEY);
+  }
+  get minioHost(): string {
+    return String(this.envConfig.MINIO_HOST);
+  }
+  get minioBucketName(): string {
+    return String(this.envConfig.MINIO_BUCKET_NAME);
+  }
+  get minioPort(): number {
+    return Number(this.envConfig.MINIO_PORT);
   }
 }

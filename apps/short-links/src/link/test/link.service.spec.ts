@@ -15,12 +15,12 @@ import * as nanoid from 'nanoid/non-secure';
 import { IAddShortlink } from '../../user/interface/add-shortlink.interface';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserLinksInterface } from '../interface/user-links.interface';
+import { AwsService } from '../../aws/service/aws.service';
 
 describe('LinkService', () => {
   let linkService: LinkService;
   let userService: UserService;
   let configService: ConfigService;
-  let minioClient: Client;
   let mailingClient: ClientProxy;
   let redis: IORedis;
   let userModel: Model<User>;
@@ -47,6 +47,7 @@ describe('LinkService', () => {
         LinkService,
         UserService,
         ConfigService,
+        AwsService,
         {
           provide: REDIS_PROVIDER,
           useValue: mockLinkService,
@@ -55,12 +56,6 @@ describe('LinkService', () => {
           provide: getModelToken(User.name),
           useValue: mockUserModel,
         },
-
-        {
-          provide: MINIO_CONNECTION,
-          useValue: mockLinkService,
-        },
-
         {
           provide: 'MAILING',
           useValue: mockLinkService,
@@ -71,7 +66,6 @@ describe('LinkService', () => {
     linkService = mockedModule.get<LinkService>(LinkService);
     userService = mockedModule.get<UserService>(UserService);
     configService = mockedModule.get<ConfigService>(ConfigService);
-    minioClient = mockedModule.get<Client>(MINIO_CONNECTION);
     mailingClient = mockedModule.get<ClientProxy>('MAILING');
     redis = mockedModule.get<IORedis>(REDIS_PROVIDER);
     userModel = mockedModule.get<Model<User>>(getModelToken(User.name));
