@@ -13,16 +13,14 @@ import { IChangeUser } from '../interface/change-user.interface';
 import { User } from '../schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IAddAvatar } from '../interface/add-avatar.interface';
-import { v4 as uuidv4 } from 'uuid';
-import { InjectMinio } from 'nestjs-minio';
-import { Client } from 'minio';
+import { IUploadFile } from '../interface/add-avatar.interface';
 import { ClientProxy } from '@nestjs/microservices';
 import { IAddMail } from '@app/common';
 import { REDIS_PROVIDER } from '../../link/provider/link.provider';
 import IORedis from 'ioredis';
 import { IVerifyMail } from '../interface/verify-mail.interface';
 import { nanoid } from 'nanoid/non-secure';
+import { AwsService } from '../../aws/service/aws.service';
 
 @Injectable()
 export class UserService {
@@ -31,8 +29,8 @@ export class UserService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly awsService: AwsService,
     @InjectModel(User.name) private userModel: Model<User>,
-    @InjectMinio() private readonly minioClient: Client,
     @Inject('MAILING')
     private mailingClient: ClientProxy,
   ) {}
@@ -117,26 +115,13 @@ export class UserService {
       .exec();
   }
 
-  createUniqueFileName(originalName: string): string {
-    return `${uuidv4()}-${originalName}`;
-  }
-
-  async addAvatar(dto: IAddAvatar): Promise<User> {
+  async addAvatar(dto: IUploadFile): Promise<User> {
     const user = await this.findOneById(dto._id);
 
-    const fileName = this.createUniqueFileName(dto.file.originalname);
-
-    await this.minioClient.putObject(
-      'short-links',
-      fileName,
-      dto.file.buffer,
-      // (err, etag) => {
-      //   console.log(etag);
-      // },
-    );
+    const fileName = await this.awsService.uploadFile(dto);
 
     if (user.avatarPath) {
-      await this.minioClient.removeObjects('short-links', [user.avatarPath]);
+      await this.awsService.deleteFile(user.avatarPath);
     }
 
     return await this.userModel
@@ -157,13 +142,7 @@ export class UserService {
     const user = await this.findOneById(_id);
     if (!user.avatarPath) throw new NotFoundException();
 
-    return await this.minioClient.getObject(
-      'short-links',
-      user.avatarPath,
-      // (err, etag) => {
-      //   console.log(etag);
-      // },
-    );
+    return await this.awsService.getFile(user.avatarPath);
   }
 
   async addMail(dto: IAddMail, _id: string): Promise<void> {
