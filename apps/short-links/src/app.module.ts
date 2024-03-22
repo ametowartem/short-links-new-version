@@ -4,25 +4,24 @@ import { AuthModule } from './auth/auth.module';
 import { LinkModule } from './link/link.module';
 import { ConfigService } from './core/service/config.service';
 import { CoreModule } from './core/core.module';
-import { FileModule } from './file/file.module';
-import { UserHttpModule } from './user/user-http.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { join } from 'path';
-import { NestMinioModule } from 'nestjs-minio';
-import { RmqModule } from '@app/common';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import * as process from 'process';
+import { AwsModule } from './aws/aws.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     AuthModule,
     HttpModule,
-    UserHttpModule,
+    UserModule,
+    // UserHttpModule,
     CoreModule,
-    FileModule,
+    AwsModule,
     // UserModule,
     ConfigModule.forRoot({
       isGlobal: true,
@@ -51,17 +50,17 @@ import * as process from 'process';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
     }),
     LinkModule,
-    NestMinioModule.register(
-      // isGlobal: true,
-      {
-        endPoint: process.env.MINIO_HOST,
-        port: +process.env.MINIO_PORT,
-        useSSL: false,
-        accessKey: process.env.MINIO_ACCESS_KEY,
-        secretKey: process.env.MINIO_SECRET_KEY,
-        //   добавить в .env
-      },
-    ),
+    // NestMinioModule.register(
+    //   // isGlobal: true,
+    //   {
+    //     isGlobal: true,
+    //     endPoint: process.env.MINIO_HOST,
+    //     port: +process.env.MINIO_PORT,
+    //     useSSL: false,
+    //     accessKey: process.env.MINIO_ACCESS_KEY,
+    //     secretKey: process.env.MINIO_SECRET_KEY,
+    //   },
+    // ),
   ],
 })
 export class AppModule {}
