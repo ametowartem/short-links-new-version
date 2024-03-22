@@ -5,7 +5,7 @@ import * as process from 'process';
 
 async function bootstrap() {
   const app = await NestFactory.create(MailModule);
-  const rmqService = app.get<RmqService>(RmqService);
+  const rmqService: RmqService = app.get<RmqService>(RmqService);
 
   app.connectMicroservice(rmqService.getOptions(process.env.MAIL_MICROSERVICE));
 
