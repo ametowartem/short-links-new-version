@@ -3,23 +3,18 @@ import { UserService } from '../service/user.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from '../schema/user.schema';
 import { ConfigService } from '../../core/service/config.service';
-import { Client } from 'minio';
-import { MINIO_CONNECTION, NestMinioService } from 'nestjs-minio';
 import { REDIS_PROVIDER } from '../../link/provider/link.provider';
 import { Model, Query } from 'mongoose';
 import IORedis from 'ioredis';
 import { ClientProxy } from '@nestjs/microservices';
 import { CreateUserInterface } from '../interface/create-user.interface';
-import * as bcrypt from 'bcrypt';
 import { IChangeUser } from '../interface/change-user.interface';
 import { IAddShortlink } from '../interface/add-shortlink.interface';
-import {
-  BadRequestException,
-  NotFoundException,
-  StreamableFile,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { IAddMail } from '@app/common';
 import * as nanoid from 'nanoid/non-secure';
+import { AwsService } from '../../aws/service/aws.service';
+import { S3_PROVIDER } from '../../aws/aws.provider';
 
 const mockUser: User = {
   _id: '65ca3d4e77df6f150f60f927',
@@ -46,10 +41,6 @@ const fileMock = {
 };
 
 describe('UserService', () => {
-  //   const mockUserService = jest.fn().mockReturnValue({
-  //     findById: jest.fn().mockResolvedValue(mockUser),
-  //   });
-
   const mockUserModel = {
     findById: jest.fn().mockResolvedValue(mockUser),
     findOne: jest.fn().mockResolvedValue(mockUser),
@@ -69,10 +60,11 @@ describe('UserService', () => {
     get: jest.fn(),
     set: jest.fn(),
     emit: jest.fn(),
+    deleteFile: jest.fn(),
+    send: jest.fn(),
   };
   let userService: UserService;
-  let configService: ConfigService;
-  let minioClient: Client;
+  let awsService: AwsService;
   let mailingClient: ClientProxy;
   let redis: IORedis;
   let userModel: Model<User>;
@@ -82,14 +74,15 @@ describe('UserService', () => {
       providers: [
         ConfigService,
         UserService,
+        AwsService,
         {
           provide: getModelToken(User.name),
           useValue: mockUserModel,
         },
-        {
-          provide: MINIO_CONNECTION,
-          useValue: mockUserService,
-        },
+        // {
+        //   provide: AwsService,
+        //   useValue: mockUserService,
+        // },
         {
           provide: 'MAILING',
           useValue: mockUserService,
@@ -98,12 +91,15 @@ describe('UserService', () => {
           provide: REDIS_PROVIDER,
           useValue: mockUserService,
         },
+        {
+          provide: S3_PROVIDER,
+          useValue: mockUserService,
+        },
       ],
     }).compile();
 
     userService = moduleRef.get<UserService>(UserService);
-    configService = moduleRef.get<ConfigService>(ConfigService);
-    minioClient = moduleRef.get<Client>(MINIO_CONNECTION);
+    awsService = moduleRef.get<AwsService>(AwsService);
     mailingClient = moduleRef.get<ClientProxy>('MAILING');
     redis = moduleRef.get<IORedis>(REDIS_PROVIDER);
     userModel = moduleRef.get<Model<User>>(getModelToken(User.name));
@@ -260,24 +256,15 @@ describe('UserService', () => {
         } as unknown as Query<User, any>);
 
       jest.spyOn(userService, 'findOneById').mockResolvedValueOnce(mockUser);
+
       jest
-        .spyOn(userService, 'createUniqueFileName')
-        .mockReturnValue(fileMock.originalname);
+        .spyOn(awsService, 'uploadFile')
+        .mockResolvedValueOnce(fileMock.originalname);
 
       const result = await userService.addAvatar({
         _id: mockUser._id,
         file: fileMock,
       });
-
-      expect(minioClient.putObject).toHaveBeenCalledWith(
-        'short-links',
-        fileMock.originalname,
-        fileMock.buffer,
-      );
-
-      expect(minioClient.removeObjects).toHaveBeenCalledWith('short-links', [
-        mockUser.avatarPath,
-      ]);
 
       expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: mockUser._id },
@@ -293,14 +280,10 @@ describe('UserService', () => {
     it('should return user avatar image if exists', async () => {
       jest.spyOn(userService, 'findOneById').mockResolvedValueOnce(mockUser);
 
-      jest.spyOn(minioClient, 'getObject').mockResolvedValue(fileMock.stream);
+      jest.spyOn(awsService, 'getFile').mockResolvedValue(fileMock.stream);
 
       const result = await userService.getUserAvatar(mockUser._id);
 
-      expect(minioClient.getObject).toHaveBeenCalledWith(
-        'short-links',
-        mockUser.avatarPath,
-      );
       expect(result).toEqual(fileMock.stream);
     });
   });

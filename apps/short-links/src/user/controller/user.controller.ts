@@ -1,19 +1,30 @@
 import {
   Body,
   Controller,
+  Get,
+  Header,
   HttpStatus,
-  Inject,
   Post,
+  StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from '../service/user.service';
 import { CreateUserRequestDto } from '../dto/create-user.request.dto';
-import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AuthGuard } from '../../auth/guard/auth.guard';
 import { UserId } from '../decorator/user.decorator';
 import { ChangeUserRequestDto } from '../dto/change-user.request.dto';
 import { AddMailRequestDto } from '../../link/dto/add-mail.request.dto';
 import { VerifyMailRequestDto } from '../dto/verify-mail.request.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { IUploadFile } from '../interface/add-avatar.interface';
 
 @Controller('user')
 export class UserController {
@@ -35,7 +46,7 @@ export class UserController {
     @UserId() userId: string,
   ) {
     // const user = await this.userService.findOneByUuid(userUuid);
-    await this.userService.changeUser(dto, userId);
+    return await this.userService.changeUser(dto, userId);
   }
 
   @ApiBearerAuth()
@@ -49,6 +60,43 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Post('verify')
   async verifyMail(@Body() dto: VerifyMailRequestDto, @UserId() _id: string) {
-    await this.userService.verifyMail(dto, _id);
+    return await this.userService.verifyMail(dto, _id);
+  }
+
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @Post('upload-avatar')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(FileInterceptor('file', {}))
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @UserId() _id: string,
+  ) {
+    await this.userService.addAvatar({
+      _id: _id,
+      file: file,
+    } as IUploadFile);
+  }
+
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @Get('avatar')
+  @Header('Content-Type', 'image/jpeg')
+  async getFile(@UserId() _id: string): Promise<StreamableFile> {
+    const file = await this.userService.getUserAvatar(_id);
+
+    return new StreamableFile(file);
   }
 }

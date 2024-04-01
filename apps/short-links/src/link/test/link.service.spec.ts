@@ -5,9 +5,7 @@ import { REDIS_PROVIDER } from '../provider/link.provider';
 import { ConfigService } from '../../core/service/config.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from '../../user/schema/user.schema';
-import { MINIO_CONNECTION } from 'nestjs-minio';
 import { ILinkToShortLink } from '../interface/link-to-short-link.interface';
-import { Client } from 'minio';
 import { ClientProxy } from '@nestjs/microservices';
 import IORedis from 'ioredis';
 import { Model } from 'mongoose';
@@ -15,12 +13,13 @@ import * as nanoid from 'nanoid/non-secure';
 import { IAddShortlink } from '../../user/interface/add-shortlink.interface';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserLinksInterface } from '../interface/user-links.interface';
+import { AwsService } from '../../aws/service/aws.service';
+import { S3_PROVIDER } from '../../aws/aws.provider';
 
 describe('LinkService', () => {
   let linkService: LinkService;
   let userService: UserService;
   let configService: ConfigService;
-  let minioClient: Client;
   let mailingClient: ClientProxy;
   let redis: IORedis;
   let userModel: Model<User>;
@@ -47,6 +46,7 @@ describe('LinkService', () => {
         LinkService,
         UserService,
         ConfigService,
+        AwsService,
         {
           provide: REDIS_PROVIDER,
           useValue: mockLinkService,
@@ -55,14 +55,12 @@ describe('LinkService', () => {
           provide: getModelToken(User.name),
           useValue: mockUserModel,
         },
-
-        {
-          provide: MINIO_CONNECTION,
-          useValue: mockLinkService,
-        },
-
         {
           provide: 'MAILING',
+          useValue: mockLinkService,
+        },
+        {
+          provide: S3_PROVIDER,
           useValue: mockLinkService,
         },
       ],
@@ -71,7 +69,6 @@ describe('LinkService', () => {
     linkService = mockedModule.get<LinkService>(LinkService);
     userService = mockedModule.get<UserService>(UserService);
     configService = mockedModule.get<ConfigService>(ConfigService);
-    minioClient = mockedModule.get<Client>(MINIO_CONNECTION);
     mailingClient = mockedModule.get<ClientProxy>('MAILING');
     redis = mockedModule.get<IORedis>(REDIS_PROVIDER);
     userModel = mockedModule.get<Model<User>>(getModelToken(User.name));
