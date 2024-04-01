@@ -65,7 +65,6 @@ describe('UserService', () => {
   };
   let userService: UserService;
   let awsService: AwsService;
-  let configService: ConfigService;
   let mailingClient: ClientProxy;
   let redis: IORedis;
   let userModel: Model<User>;
@@ -100,7 +99,6 @@ describe('UserService', () => {
     }).compile();
 
     userService = moduleRef.get<UserService>(UserService);
-    configService = moduleRef.get<ConfigService>(ConfigService);
     awsService = moduleRef.get<AwsService>(AwsService);
     mailingClient = moduleRef.get<ClientProxy>('MAILING');
     redis = moduleRef.get<IORedis>(REDIS_PROVIDER);
