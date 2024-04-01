@@ -14,6 +14,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { IAddMail } from '@app/common';
 import * as nanoid from 'nanoid/non-secure';
 import { AwsService } from '../../aws/service/aws.service';
+import { S3_PROVIDER } from '../../aws/aws.provider';
 
 const mockUser: User = {
   _id: '65ca3d4e77df6f150f60f927',
@@ -60,6 +61,7 @@ describe('UserService', () => {
     set: jest.fn(),
     emit: jest.fn(),
     deleteFile: jest.fn(),
+    send: jest.fn(),
   };
   let userService: UserService;
   let awsService: AwsService;
@@ -88,6 +90,10 @@ describe('UserService', () => {
         },
         {
           provide: REDIS_PROVIDER,
+          useValue: mockUserService,
+        },
+        {
+          provide: S3_PROVIDER,
           useValue: mockUserService,
         },
       ],

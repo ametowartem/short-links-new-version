@@ -5,9 +5,7 @@ import { REDIS_PROVIDER } from '../provider/link.provider';
 import { ConfigService } from '../../core/service/config.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from '../../user/schema/user.schema';
-import { MINIO_CONNECTION } from 'nestjs-minio';
 import { ILinkToShortLink } from '../interface/link-to-short-link.interface';
-import { Client } from 'minio';
 import { ClientProxy } from '@nestjs/microservices';
 import IORedis from 'ioredis';
 import { Model } from 'mongoose';
@@ -16,6 +14,7 @@ import { IAddShortlink } from '../../user/interface/add-shortlink.interface';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserLinksInterface } from '../interface/user-links.interface';
 import { AwsService } from '../../aws/service/aws.service';
+import { S3_PROVIDER } from '../../aws/aws.provider';
 
 describe('LinkService', () => {
   let linkService: LinkService;
@@ -58,6 +57,10 @@ describe('LinkService', () => {
         },
         {
           provide: 'MAILING',
+          useValue: mockLinkService,
+        },
+        {
+          provide: S3_PROVIDER,
           useValue: mockLinkService,
         },
       ],
